@@ -1,5 +1,5 @@
 # Grover
-Grover - Craft new full web server
+Grover - Craft a complete web server
 
 
 ## What is this?
