@@ -11,7 +11,7 @@ All of operations are made following DigitalOcean's tutorials.
 It's free, open source and simple to use: why not?
 
 ## Ok, got it. How can I start?
-1. Download grover in your server. SSH in it and execute `wget TO-DO`.
+1. Download grover in your server. SSH in it and execute `wget https://raw.githubusercontent.com/DaniloPolani/grover/master/grover.py`.
 1. Install python3, if you don't have it (you should, man).
 1. Execute `sudo python3 grover.py` and answer to the questions.
 
