@@ -3,7 +3,7 @@
 # By Danilo Polani (@Grork)
 # Usage: sudo python3 grover.py
 
-import urllib.request, subprocess, time, os
+import urllib.request, subprocess, pexpect, time, os
 
 # Colors for terminal
 colors = {
@@ -78,13 +78,26 @@ def clear_domain(str):
     # Remove initial www., if there is
     if str.startswith('www.'):
         str = str.replace('www.', '', 1)
-    
+
     return str
+
+# Print a line
+def line():
+    print('_' * 20)
+
+# Answer to prompt
+# @param class spawn
+# @param string question
+# @param string answer
+def answer_to(spawn, question, answer):
+    spawn.expect(question)
+    spawn.sendline(answer)
 
 if __name__ == '__main__':
 
     # Welcome on the hell
     print("""
+__________________________________________________________________    
     _____    ______       ____     __    __    _____   ______    
    / ___ \  (   __ \     / __ \    ) )  ( (   / ___/  (   __ \   
   / /   \_)  ) (__) )   / /  \ \  ( (    ) ) ( (__     ) (__) )  
@@ -92,6 +105,12 @@ if __name__ == '__main__':
  ( ( (__  )  ) \ \  _  ( ()  () )   \ \/ /   ( (       ) \ \  _  
   \ \__/ /  ( ( \ \_))  \ \__/ /     \  /     \ \___  ( ( \ \_)) 
    \____/    )_) \__/    \____/       \/       \____\  )_) \__/  
+
+                    Web Server Crafter
+Nginx, PHP7, MariaDB, Firewall, Fail2Ban, Cache, GZip, Security
+
+                By Danilo Polani (@Grork)
+__________________________________________________________________
     """)
 
     header('Welcome on Grover, web server crafter!')
@@ -104,13 +123,14 @@ if __name__ == '__main__':
     subprocess.check_output(['apt-get','update'])
     success('Updated.')
 
+    
     # --------------
     # START LEMP
     # --------------
 
     # Install NGINX, PHP and Git
     header('Installing nginx, php7 and git...')
-    subprocess.check_output(['apt-get', 'install', '-y', 'nginx', 'php7.0-fpm', 'php7.0-cli', 'php7.0-mcrypt', 'php7.0-mbstring', 'git'])
+    subprocess.check_output(['apt-get', 'install', '-y', 'nginx', 'php7.0-fpm', 'php7.0-cli', 'php7.0-mcrypt', 'php7.0-mbstring', 'php7.0-gd', 'git', 'debconf-utils'])
     success('Installed.')
 
     # Retrieve versions
@@ -142,12 +162,15 @@ if __name__ == '__main__':
 
     # Edit nginx conf
     server_name = clear_domain(force_prompt('Which is the server name? (e.g. mysite.com): '))
+    line()
     
     # Retrieve site domain
     site_domain = clear_domain(force_prompt('Which is the site domain without http(s)://(www)? (e.g. mysite.com, danilo.rocks ...): '))
+    line()
 
     # Will the site be with www?
     use_www = prompt_yes_no('Will you use the www subdomain (e.g. http(s)://www.mysite.com) or not (http(s)://mysite.com)?')
+    line()
 
     # Retrieve config details
     public_path = input('Which will be the public path of your /var/www/' + project_name + '? (starting with a slash, e.g. /public. Leave empty for the root): ')
@@ -158,8 +181,10 @@ if __name__ == '__main__':
     
     public_path = project_name + public_path
     is_ssl = prompt_yes_no('Will you have SSL certificate for HTTPS?')
+    line()
     if is_ssl:
         ssl_cert = force_prompt('Path for SSL certificate (.crt file, type "n" to cancel SSL): ')
+        line()
         if ssl_cert.lower() in 'no':
             is_ssl = False
         else:
@@ -209,11 +234,48 @@ if __name__ == '__main__':
     subprocess.check_output(['service', 'nginx', 'restart'], stderr=subprocess.DEVNULL)
     success('Done.')
 
+    # Install MariaDB
+    mysql_password = force_prompt('What will be your MySQL password? ')
+    # Set password to disable prompt of MariaDB
+    subprocess.check_output('echo "mariadb-server mysql-server/root_password password ' + mysql_password + '" | debconf-set-selections', stderr=subprocess.DEVNULL, shell=True)
+    subprocess.check_output('echo "mariadb-server mysql-server/root_password password ' + mysql_password + '" | debconf-set-selections', stderr=subprocess.DEVNULL, shell=True)
+    # Install
+    subprocess.check_output(['apt-get', '-y', '-qq', 'install', 'mariadb-server'])
+    # Start it
+    subprocess.check_output(['service', 'mysql', 'start'])
+    # Secure installation
+    answer = pexpect.spawn('mysql_secure_installation')
+    answer_to(answer, 'Enter current password.*', 'asd123')
+    answer_to(answer, 'Change the root password.*', 'n')
+    answer_to(answer, 'Remove anonymous users.*', 'Y')
+    answer_to(answer, 'Disallow root login remotely.*', 'Y')
+    answer_to(answer, 'Remove test database and access to it.*', 'Y')
+    answer_to(answer, 'Reload privilege tables now.*', 'Y')
+    success('MariaDB installed.')
+
+    # Create new MySQL user
+    if prompt_yes_no('Would you like to create another MySQL user (suggested)?'):
+        new_mysql_user_name = force_prompt('What will be the user name? (Type "n" to cancel creation): ')
+        if new_mysql_user_name != 'n':
+            new_mysql_user_password = force_prompt('What will be the user password? (Type "n" to cancel creation): ')
+            if new_mysql_user_password != 'n':
+                subprocess.check_output('mysql -e "CREATE USER \'' + new_mysql_user_name + '\'@\'localhost\' IDENTIFIED BY \'' + new_mysql_user_password + '\';"', shell=True)
+                subprocess.check_output('mysql -e "GRANT ALL PRIVILEGES ON *.* TO \'' + new_mysql_user_name + '\'@\'localhost\';"', shell=True)
+                subprocess.check_output('mysql -e "FLUSH PRIVILEGES;"', shell=True)
+                success('MySQL user created.')
+    
+    # Create new database
+    if prompt_yes_no('Would you like to create a new database?'):
+        new_mysql_db = force_prompt('What will be the database name? (Type "n" to cancel creation): ')
+        if new_mysql_db != 'n':
+            subprocess.check_output('mysql -e "CREATE DATABASE ' + new_mysql_db + ';"', shell=True)
+                success('Database created.')
+
     # --------------
-    # START ROOT USER
+    # DISABLE ROOT USER
     # --------------
     current_user = php_version = subprocess.check_output(['whoami'])
-    if current_user == 'root' and prompt_yes_no('You would like to disable root account? (Suggested)'):
+    if current_user == 'root' and prompt_yes_no('You would like to disable root account (suggested)?'):
         # Do things here
         pass
     
