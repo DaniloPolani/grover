@@ -32,3 +32,19 @@ It's free, open source and simple to use: why not?
 * What is a domain name?
   * Usually the domain name is your site domain without http and www, for example http://www.example.com will be **example.com**. If you are using a Load Balancer, type your machine IP.
   
+* What this will install in my server?
+   * PHP7.0 (+ FPM, CLI, mcrypt, mbstring, gd)
+   * Git
+   * MariaDB
+      * New user (optional, but suggested)
+      * New database (optional)
+   * Nginx (Web Server)
+      * A project folder (in /var/www)
+      * HTTPS (optional) with SSL certificate + Auto redirect
+      * Auto-redirect to www. or non-www.
+   * Disable root account (suggested)
+      * New user with sudo privileges
+         * Auto-copying SSH authorized_keys to new user
+      * Disable PermitRootLogin (/etc/ssh/sshd_config file)
+   * Enable only SSH (disabling password login)
+      * Disable PasswordAuthentication (/etc/ssh/sshd_config file)
