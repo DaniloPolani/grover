@@ -3,7 +3,7 @@
 # By Danilo Polani (@Grork)
 # Usage: sudo python3 grover.py
 
-import urllib.request, subprocess, pexpect, time, os
+import urllib.request, subprocess, pexpect, shutil, time, os
 
 # Colors for terminal
 colors = {
@@ -12,6 +12,7 @@ colors = {
     'BOLD_BLUE': '\033[1;94m',
     'GREEN': '\033[92m',
     'WARNING': '\033[93m',
+    'BOLD_WARNING': '\033[1;93m',
     'FAIL': '\033[91m',
     'BOLD': '\033[1m',
     'UNDERLINE': '\033[4m',
@@ -95,7 +96,7 @@ def answer_to(spawn, question, answer):
 
 if __name__ == '__main__':
 
-    # Welcome on the hell
+    # Welcome to the hell
     print("""
 __________________________________________________________________    
     _____    ______       ____     __    __    _____   ______    
@@ -122,7 +123,6 @@ __________________________________________________________________
     header('Updating apt...')
     subprocess.check_output(['apt-get','update'])
     success('Updated.')
-
     
     # --------------
     # START LEMP
@@ -269,19 +269,64 @@ __________________________________________________________________
         new_mysql_db = force_prompt('What will be the database name? (Type "n" to cancel creation): ')
         if new_mysql_db != 'n':
             subprocess.check_output('mysql -e "CREATE DATABASE ' + new_mysql_db + ';"', shell=True)
-                success('Database created.')
+            success('Database created.')
 
     # --------------
     # DISABLE ROOT USER
     # --------------
-    current_user = php_version = subprocess.check_output(['whoami'])
+    current_user = subprocess.check_output(['whoami']).decode('ascii').replace('\n', '')
     if current_user == 'root' and prompt_yes_no('You would like to disable root account (suggested)?'):
-        # Do things here
-        pass
-    
+        new_user_name = force_prompt('What will be the new user name? (Type "n" to cancel creation): ')
+        if new_user_name != 'n':
+            new_user_password = force_prompt('What will be the new user password? (Type "n" to cancel creation): ')
+            if new_user_password != 'n':
+                answer = pexpect.spawn('adduser ' + new_user_name)
+                answer_to(answer, 'Enter new UNIX password.*', new_user_password)
+                answer_to(answer, 'Retype new UNIX password.*', new_user_password)
+                answer_to(answer, '.*Full Name.*', '')
+                answer_to(answer, '.*Room Number.*', '')
+                answer_to(answer, '.*Work Phone.*', '')
+                answer_to(answer, '.*Home Phone.*', '')
+                answer_to(answer, '.*Other.*', '')
+                answer_to(answer, 'Is the information correct?.*', 'Y')
+                success('User created.')
+
+                # Check if there is an authorized_keys file
+                if os.path.isdir('.ssh') and os.path.exists('.ssh/authorized_keys'):
+                    new_user_ssh_path = '/home/' + new_user_name + '/.ssh'
+                    os.mkdir(new_user_ssh_path)
+                    os.chmod(new_user_ssh_path, 0o700)
+                    shutil.copy('.ssh/authorized_keys', new_user_ssh_path)
+
+                    # Set permissions
+                    shutil.chown(new_user_ssh_path, user=new_user_name, group=new_user_name)
+                    shutil.chown(new_user_ssh_path + '/authorized_keys', user=new_user_name, group=new_user_name)
+
+                    success('authorized_keys SSH file found and copied to new user. Path: ' + new_user_ssh_path + '/authorized_keys')
+
+                # Add user to sudo group
+                subprocess.check_output(['gpasswd', '-a', new_user_name, 'sudo'])
+
+                # Disable root login
+                with open('/etc/ssh/sshd_config', 'r') as file:
+                    sshd_config = file.read()
+                sshd_config = sshd_config.replace('PermitRootLogin yes', 'PermitRootLogin no')
+                with open('/etc/ssh/sshd_config', 'w') as file:
+                    file.write(sshd_config)
+                
+                # Reload ssh
+                subprocess.check_output(['service', 'ssh', 'restart'])
+                success('Root user disabled.')
+
     # --------------
     # ENABLE ONLY SSH (DISABLE PASSWORD)
     # --------------
-    if prompt_yes_no('You would like to disable password login and enable only SSH? WARNING: Remember to upload your SSH key to authorized_keys!'):
-        # Do things here
-        pass
+    if prompt_yes_no('You would like to disable password login and enable only SSH? ' + colors['BOLD_WARNING'] + 'WARNING: Remember to upload your SSH key to authorized_keys!' + colors['END']):
+        with open('/etc/ssh/sshd_config', 'r') as file:
+            sshd_config = file.read()
+        sshd_config = sshd_config.replace('PasswordAuthentication yes', 'PasswordAuthentication no')
+        with open('/etc/ssh/sshd_config', 'w') as file:
+            file.write(sshd_config)
+            
+        # Reload ssh
+        subprocess.check_output(['service', 'ssh', 'restart'])
