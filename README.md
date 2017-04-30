@@ -36,15 +36,15 @@ It's free, open source and simple to use: why not?
    * **PHP7.0** (+ FPM, CLI, mcrypt, mbstring, gd)
    * **Git**
    * **MariaDB**
-      * ###### New user (optional, but suggested)
-      * ###### New database (optional)
+      * <sub><sup>New user (optional, but suggested)</sup></sub>
+      * <sub><sup>New database (optional)</sup></sub>
    * **Nginx** (Web Server)
-      * ###### A project folder (in /var/www)
-      * ###### HTTPS (optional) with SSL certificate + Auto redirect
-      * ###### Auto-redirect to www. or non-www.
+      * <sub><sup>A project folder (in /var/www)</sup></sub>
+      * <sub><sup>HTTPS (optional) with SSL certificate + Auto redirect</sup></sub>
+      * <sub><sup>Auto-redirect to www. or non-www.</sup></sub>
    * **Disable root account** (suggested)
-      * ###### New user with sudo privileges
-         * ###### Auto-copying SSH authorized_keys to new user
-      * ###### Disable PermitRootLogin (/etc/ssh/sshd_config file)
+      * <sub><sup>New user with sudo privileges</sup></sub>
+         * <sub><sup>Auto-copying SSH authorized_keys to new user</sup></sub>
+      * <sub><sup>Disable PermitRootLogin (/etc/ssh/sshd_config file)</sup></sub>
    * **Enable only SSH** (disabling password login)
-      * ###### Disable PasswordAuthentication (/etc/ssh/sshd_config file)
+      * <sub><sup>Disable PasswordAuthentication (/etc/ssh/sshd_config file)</sup></sub>
