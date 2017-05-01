@@ -14,7 +14,7 @@ Craft a complete web server
 ## What is this?
 Grover is a simple interactive Python tool that allows you to craft a complete web server with LEMP stack (nginx, MySQL, PHP7.0), Fail2Ban, Firewall, only-SSH login, disable root account and other tools with simple questions like *What is your domain name?*
 
-All of operations are made following DigitalOcean's tutorials.
+At this time Grover is available **only for Ubuntu servers**.
 
 ## Why should I use it?
 It's free, open source and simple to use: why not?
