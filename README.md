@@ -40,7 +40,7 @@ It's free, open source and simple to use: why not?
       * <sub><sup>New database (optional)</sup></sub>
    * **Nginx** (Web Server)
       * <sub><sup>A project folder (in /var/www)</sup></sub>
-      * <sub><sup>HTTPS (optional) with SSL certificate + Auto redirect</sup></sub>
+      * <sub><sup>HTTPS (optional) with SSL certificate + Auto redirect + HTTP/2</sup></sub>
       * <sub><sup>Auto-redirect to www. or non-www.</sup></sub>
    * **Disable root account** (suggested)
       * <sub><sup>New user with sudo privileges</sup></sub>
