@@ -33,8 +33,15 @@ It's free, open source and simple to use: why not?
   * Usually the domain name is your site domain without http and www, for example http://www.example.com will be **example.com**. If you are using a Load Balancer, type your machine IP.
   
 * What this will install in my server?
-   * **PHP7.0** (+ FPM, CLI, mcrypt, mbstring, gd)
+   * **PHP7.0**
+      * <sub><sup>FPM</sup></sub>
+      * <sub><sup>CLI</sup></sub>
+      * <sub><sup>mcrypt</sup></sub>
+      * <sub><sup>mbstring</sup></sub>
+      * <sub><sup>GD</sup></sub>
    * **Git**
+   * **NodeJS**
+   * **npm**
    * **MariaDB**
       * <sub><sup>New user (optional, but suggested)</sup></sub>
       * <sub><sup>New database (optional)</sup></sub>
