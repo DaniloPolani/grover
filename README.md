@@ -34,24 +34,26 @@ It's free, open source and simple to use: why not?
   
 * What this will install in my server?
    * **PHP7.0**
-      * <sub><sup>FPM</sup></sub>
-      * <sub><sup>CLI</sup></sub>
-      * <sub><sup>mcrypt</sup></sub>
-      * <sub><sup>mbstring</sup></sub>
-      * <sub><sup>GD</sup></sub>
+      * *FPM*
+      * *CLI*
+      * *mcrypt*
+      * *mbstring*
+      * *GD*
    * **Git**
    * **NodeJS**
    * **npm**
    * **MariaDB**
-      * <sub><sup>New user (optional, but suggested)</sup></sub>
-      * <sub><sup>New database (optional)</sup></sub>
+      * *New user (optional, but suggested)*
+      * *New database (optional)*
    * **Nginx** (Web Server)
-      * <sub><sup>A project folder (in /var/www)</sup></sub>
-      * <sub><sup>HTTPS (optional) with SSL certificate + Auto redirect + HTTP/2</sup></sub>
-      * <sub><sup>Auto-redirect to www. or non-www.</sup></sub>
+      * *A project folder (in /var/www)*
+      * *HTTPS (optional) with SSL certificate + Auto redirect + HTTP/2*
+      * *Auto-redirect to www. or non-www.*
    * **Disable root account** (suggested)
-      * <sub><sup>New user with sudo privileges</sup></sub>
-         * <sub><sup>Auto-copying SSH authorized_keys to new user</sup></sub>
-      * <sub><sup>Disable PermitRootLogin (/etc/ssh/sshd_config file)</sup></sub>
+      * *New user with sudo privileges*
+         * *Auto-copy SSH authorized_keys to new user*
+      * *Disable PermitRootLogin (/etc/ssh/sshd_config file)*
    * **Enable only SSH** (disabling password login)
-      * <sub><sup>Disable PasswordAuthentication (/etc/ssh/sshd_config file)</sup></sub>
+      * *Disable PasswordAuthentication (/etc/ssh/sshd_config file)*
+   * **Fail2Ban**
+   * **Firewall** (iptables + iptables-persistent)
