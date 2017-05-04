@@ -130,7 +130,10 @@ __________________________________________________________________
 
     # Install NGINX, PHP and Git
     header('Installing nginx, php7 and git...')
-    subprocess.check_output(['apt-get', 'install', '-y', 'nginx', 'php7.0-fpm', 'php7.0-cli', 'php7.0-mcrypt', 'php7.0-mbstring', 'php7.0-gd', 'git', 'debconf-utils'])
+    subprocess.check_output([
+        'apt-get', 'install', '-y',
+        'nginx', 'php7.0-fpm', 'php7.0-cli', 'php7.0-mcrypt', 'php7.0-mbstring', 'php7.0-gd', 'git', 'nodejs', 'npm', 'debconf-utils',
+    ])
     success('Installed.')
 
     # Retrieve versions
@@ -302,7 +305,7 @@ __________________________________________________________________
                     shutil.chown(new_user_ssh_path, user=new_user_name, group=new_user_name)
                     shutil.chown(new_user_ssh_path + '/authorized_keys', user=new_user_name, group=new_user_name)
 
-                    success('authorized_keys SSH file found and copied to new user. Path: ' + new_user_ssh_path + '/authorized_keys')
+                    success('SSH authorized_keys file found and copied to new user. Path: ' + new_user_ssh_path + '/authorized_keys')
 
                 # Add user to sudo group
                 subprocess.check_output(['gpasswd', '-a', new_user_name, 'sudo'])
@@ -330,3 +333,57 @@ __________________________________________________________________
             
         # Reload ssh
         subprocess.check_output(['service', 'ssh', 'restart'])
+        success('Password login disabled. Only SSH now allowed.')
+
+    # --------------
+    # FAIL2BAN + FIREWALL
+    # --------------
+    header('Installing fail2ban and firewall...')
+    subprocess.check_output('echo "iptables-persistent iptables-persistent/autosave_v4 boolean true" | debconf-set-selections', stderr=subprocess.DEVNULL, shell=True)
+    subprocess.check_output('echo "iptables-persistent iptables-persistent/autosave_v6 boolean true" | debconf-set-selections', stderr=subprocess.DEVNULL, shell=True)
+
+    subprocess.check_output(['apt-get', 'install', '-y', 'fail2ban', 'iptables-persistent'], stderr=subprocess.DEVNULL)
+    
+    # Copy configuration file
+    subprocess.check_output('awk \'{ printf "# "; print; }\' /etc/fail2ban/jail.conf | tee /etc/fail2ban/jail.local', shell=True)
+
+    # Stop fail2ban to setup firewall
+    subprocess.check_output(['service', 'fail2ban', 'stop'])
+    success('Fail2Ban installed.')
+
+    header('Configuring firewall (iptables)...')
+    # Setup iptables rules
+    subprocess.check_output(['iptables', '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT'], stderr=subprocess.DEVNULL)
+    subprocess.check_output(['iptables', '-A', 'INPUT', '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'], stderr=subprocess.DEVNULL)
+    subprocess.check_output(['iptables', '-A', 'INPUT', '-p', 'tcp', '--dport', '22', '-j', 'ACCEPT'], stderr=subprocess.DEVNULL)
+    subprocess.check_output(['iptables', '-A', 'INPUT', '-p', 'tcp', '-m', 'multiport', '--dports', '80,443', '-j', 'ACCEPT'], stderr=subprocess.DEVNULL)
+    subprocess.check_output(['iptables', '-A', 'INPUT', '-j', 'DROP'], stderr=subprocess.DEVNULL)
+
+    # Save firewall
+    subprocess.check_output('iptables-save > /etc/iptables/rules.v4', shell=True, stderr=subprocess.DEVNULL)
+    subprocess.check_output('ip6tables-save > /etc/iptables/rules.v6', shell=True, stderr=subprocess.DEVNULL)
+
+    # Start fail2ban
+    subprocess.check_output(['service', 'fail2ban', 'start'])
+    success('Firewall configurated.')
+
+    # Edit fail2ban config
+    """
+    with open('/etc/fail2ban/jail.local', 'r') as file:
+            jail_local = file.read()
+
+    nginx_http_auth = '[nginx-http-auth]\n\nenabled = true\nfilter = nginx-http-auth\nport = http,https\nlogpath = /var/log/nginx/error.log\n\n'
+    nginx_noscript = '[nginx-noscript]\n\nenabled = true\nport = http,https\nfilter = nginx-noscript\nlogpath = /var/log/nginx/access.log\nmaxretry = 6\n\n'
+    nginx_badbot = '[nginx-badbots]\n\nenabled = true\nport = http,https\nfilter = nginx-badbots\nlogpath = /var/log/nginx/access.log\nmaxretry = 2\n\n'
+    nginx_noproxy = '[nginx-noproxy]\n\nenabled = true\nport = http,https\nfilter = nginx-noproxy\nlogpath = /var/log/nginx/access.log\nmaxretry = 2\n\n'
+
+    jail_local = jail_local.replace('# [nginx-http-auth]', nginx_http_auth + nginx_noscript + nginx_badbot + nginx_noproxy)
+
+    with open('/etc/fail2ban/jail.local', 'w') as file:
+        file.write(jail_local)
+
+    # Restart fail2ban
+    subprocess.check_output(['service', 'fail2ban', 'stop'])
+    subprocess.check_output(['service', 'fail2ban', 'start'])
+    """
+    success('Fail2Ban configurated.')
