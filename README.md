@@ -39,6 +39,7 @@ It's free, open source and simple to use: why not?
       * *mcrypt*
       * *mbstring*
       * *GD*
+      * Secure removing version from public details
    * **Git**
    * **NodeJS**
    * **npm**
@@ -49,6 +50,7 @@ It's free, open source and simple to use: why not?
       * *A project folder (in /var/www)*
       * *HTTPS (optional) with SSL certificate + Auto redirect + HTTP/2*
       * *Auto-redirect to www. or non-www.*
+      * Secure removing version from public details
    * **Disable root account** (suggested)
       * *New user with sudo privileges*
          * *Auto-copy SSH authorized_keys to new user*
