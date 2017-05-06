@@ -3,7 +3,7 @@
 # By Danilo Polani (@Grork)
 # Usage: sudo python3 grover.py
 
-import urllib.request, subprocess, pexpect, shutil, time, os
+import urllib.request, subprocess, pexpect, shutil, time, sys, os
 
 # Colors for terminal
 colors = {
@@ -84,7 +84,7 @@ def clear_domain(str):
 
 # Print a line
 def line():
-    print('_' * 20)
+    print('-' * 50)
 
 # Answer to prompt
 # @param class spawn
@@ -150,6 +150,7 @@ __________________________________________________________________
     # Change PHP settings...
     header('Editing php.ini...')
     replace_in_file('/etc/php/7.0/fpm/php.ini', ';cgi.fix_pathinfo=1', 'cgi.fix_pathinfo=0')
+    replace_in_file('/etc/php/7.0/fpm/php.ini', 'expose_php = On', 'expose_php = Off')
     # ...and restart PHP
     header('Restarting PHP...')
     subprocess.check_output(['service', 'php7.0-fpm', 'restart'])
@@ -237,7 +238,10 @@ __________________________________________________________________
     subprocess.check_output(['service', 'nginx', 'restart'], stderr=subprocess.DEVNULL)
     success('Done.')
 
+    line()
+
     # Install MariaDB
+    header('Installing MySQL (MariaDB)...')
     mysql_password = force_prompt('What will be your MySQL password? ')
     # Set password to disable prompt of MariaDB
     subprocess.check_output('echo "mariadb-server mysql-server/root_password password ' + mysql_password + '" | debconf-set-selections', stderr=subprocess.DEVNULL, shell=True)
@@ -273,6 +277,19 @@ __________________________________________________________________
         if new_mysql_db != 'n':
             subprocess.check_output('mysql -e "CREATE DATABASE ' + new_mysql_db + ';"', shell=True)
             success('Database created.')
+
+    line()
+
+    # --------------
+    # SECURE NGINX
+    # --------------
+    header('Securing nginx...')
+    replace_in_file('/etc/nginx/nginx.conf', '# server_tokens off', 'server_tokens off')
+    # Reload nginx
+    subprocess.check_output(['service', 'nginx', 'reload'], stderr=subprocess.DEVNULL)
+    success('Secured.')
+
+    line()
 
     # --------------
     # DISABLE ROOT USER
@@ -311,29 +328,28 @@ __________________________________________________________________
                 subprocess.check_output(['gpasswd', '-a', new_user_name, 'sudo'])
 
                 # Disable root login
-                with open('/etc/ssh/sshd_config', 'r') as file:
-                    sshd_config = file.read()
-                sshd_config = sshd_config.replace('PermitRootLogin yes', 'PermitRootLogin no')
-                with open('/etc/ssh/sshd_config', 'w') as file:
-                    file.write(sshd_config)
+                replace_in_file('/etc/ssh/sshd_config', 'PermitRootLogin yes', 'PermitRootLogin no')
                 
+                # Edit permission of the project folder
+                shutil.chown('/var/www/' + project_name.lower(), user=new_user_name, group=new_user_name)
+
                 # Reload ssh
                 subprocess.check_output(['service', 'ssh', 'restart'])
                 success('Root user disabled.')
+
+    line()
 
     # --------------
     # ENABLE ONLY SSH (DISABLE PASSWORD)
     # --------------
     if prompt_yes_no('You would like to disable password login and enable only SSH? ' + colors['BOLD_WARNING'] + 'WARNING: Remember to upload your SSH key to authorized_keys!' + colors['END']):
-        with open('/etc/ssh/sshd_config', 'r') as file:
-            sshd_config = file.read()
-        sshd_config = sshd_config.replace('PasswordAuthentication yes', 'PasswordAuthentication no')
-        with open('/etc/ssh/sshd_config', 'w') as file:
-            file.write(sshd_config)
+        replace_in_file('/etc/ssh/sshd_config', 'PasswordAuthentication yes', 'PasswordAuthentication no')
             
         # Reload ssh
         subprocess.check_output(['service', 'ssh', 'restart'])
         success('Password login disabled. Only SSH now allowed.')
+
+    line()
 
     # --------------
     # FAIL2BAN + FIREWALL
@@ -385,5 +401,14 @@ __________________________________________________________________
     # Restart fail2ban
     subprocess.check_output(['service', 'fail2ban', 'stop'])
     subprocess.check_output(['service', 'fail2ban', 'start'])
-    """
     success('Fail2Ban configurated.')
+    """
+
+    line()
+    line()
+    line()
+    line()
+    success('Grover has completed his job.')
+    success('If you chose to create another account and disable root, remember to logout and login with it.')
+    success('HAVE A NICE CODE!')
+    sys.exit()
