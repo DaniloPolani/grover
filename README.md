@@ -1,15 +1,4 @@
-# Grover
-```
-   _____    ______       ____     __    __    _____   ______    
-  / ___ \  (   __ \     / __ \    ) )  ( (   / ___/  (   __ \   
- / /   \_)  ) (__) )   / /  \ \  ( (    ) ) ( (__     ) (__) )  
-( (  ____  (    __/   ( ()  () )  \ \  / /   ) __)   (    __/   
-( ( (__  )  ) \ \  _  ( ()  () )   \ \/ /   ( (       ) \ \  _  
- \ \__/ /  ( ( \ \_))  \ \__/ /     \  /     \ \___  ( ( \ \_)) 
-  \____/    )_) \__/    \____/       \/       \____\  )_) \__/ 
-```
-Craft a complete web server
-
+![Grover Logo](http://i.imgur.com/CbpIhow.jpg)
 
 ## What is this?
 Grover is a simple interactive Python tool that allows you to craft a complete web server with LEMP stack (nginx, MySQL, PHP7.0), Fail2Ban, Firewall, only-SSH login, disable root account and other tools with simple questions like *What is your domain name?*
